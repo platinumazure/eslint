@@ -1976,22 +1976,72 @@ ruleTester.run("indent", rule, {
                 [2, 1, 0, "VariableDeclaration"]
             ])
         },
+
+        /**
+         * The following are situations where the autofix
+         * does not really behave correctly yet.
+         */
+
+        // autofixing can have trouble with multi-line
+        // comments on the same line as the code
         {
             code:
-                "function a() {\n" +
-                "if (a) {\n" +
-                "\tvar x; /* multiline comment\n" +
-                "wooooo */\t}\n" +
-                "}",
+            "function a() {\n" +
+            "if (a) {\n" +
+            "\tvar x; /* multiline comment\n" +
+            "wooooo */\t}\n" +
+            "}",
             output:
-                "function a() {\n" +
-                "if (a) {\n" +
-                "\tvar x; /* multiline comment\n" +
-                "wooooo */}" +
-                "}",
+            "function a() {\n" +
+            "\tif (a) {\n" +
+            "\tvar x; /* multiline comment\n" +
+            "wooooo */\t}\n" +
+            "}",
             options: ["tab"],
             errors: expectedErrors("tab", [
-                [4, 0, 1, "IfStatement"]
+                [2, 1, 0, "IfStatement"]
+            ])
+        },
+
+        // autofixing basically ignores block comments
+        {
+            code:
+            "function x() {\n" +
+            "\t/**\n" +
+            "\t * Exciting comment\n" +
+            "\t */\n" +
+            "\tfunction y() {}\n" +
+            "}",
+            output:
+            "function x() {\n" +
+            "\t/**\n" +
+            "\t * Exciting comment\n" +
+            "\t */\n" +
+            "    function y() {}\n" +
+            "}",
+            options: [4],
+            errors: expectedErrors([
+                [5, 4, 0, "FunctionDeclaration"]
+            ])
+        },
+
+        // code in between comments can become misaligned
+        {
+            code:
+            "function x() {\n" +
+            "  //////////////////////////\n" +
+            "  /**/  suite('foo, ')  /**/\n" +
+            "  //////////////////////////\n" +
+            "}\n",
+            output:
+            "function x() {\n" +
+            "  //////////////////////////\n" +
+            "  /**/    suite('foo, ')  /**/\n" +
+            "  //////////////////////////\n" +
+            "}\n",
+            options: [4],
+            errors: expectedErrors([
+                [3, 4, 2, "ExpressionStatement"]
             ])
         }
     ]
